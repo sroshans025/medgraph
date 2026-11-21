@@ -150,11 +150,11 @@ class BrainMriMonaiModel(MedicalVisionModel):
         Deterministic segmenter that thresholds bright FLAIR/T2 regions.
         """
         mask = (image > 0.75).astype(np.uint8) * 255
-        
+
+        # Too few bright pixels to call a lesion: report no findings rather than inventing one.
         if np.sum(mask > 0) < 100:
-            mask = np.zeros_like(image, dtype=np.uint8)
-            cv2.circle(mask, (240, 190), 40, 255, -1)
-            
+            return []
+
         return self._extract_findings_from_mask(mask, image)
 
     def _extract_findings_from_mask(self, mask: np.ndarray, original: np.ndarray) -> List[Dict[str, Any]]:
