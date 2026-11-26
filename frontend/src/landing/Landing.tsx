@@ -17,7 +17,7 @@ const Mark: React.FC<{ className?: string }> = ({ className }) => (
 const Section: React.FC<{ id?: string; n: string; kicker: string; title: React.ReactNode; lede?: string; children: React.ReactNode; tone?: 'paper' | 'paper2' }> = ({ id, n, kicker, title, lede, children, tone = 'paper' }) => (
   <section id={id} className={`${tone === 'paper2' ? 'bg-paper-2' : 'bg-paper'} border-t border-rule`}>
     <div className="mx-auto max-w-[1240px] px-6 py-24 md:px-10">
-      <div className="mb-14 grid gap-6 md:grid-cols-[180px_1fr]">
+      <div className="mb-14 grid grid-cols-1 gap-6 md:grid-cols-[180px_1fr]">
         <div className="label-mono pt-2 text-ink-3">
           <span className="text-signal">§{n}</span> {kicker}
         </div>
@@ -57,7 +57,7 @@ export const Landing: React.FC = () => {
           <a href="#/" className="flex items-center gap-2.5">
             <Mark className="h-7 w-7 text-ink" />
             <span className="text-[15px] font-semibold tracking-tight">MedGraph</span>
-            <span className="label-mono hidden rounded-[2px] border border-ink/30 px-1.5 py-[1px] text-ink-3 sm:inline">v2 · research</span>
+            <span className="label-mono hidden rounded-[2px] md:inline border border-ink/30 px-1.5 py-[1px] text-ink-3 sm:inline">v2 · research</span>
           </a>
           <nav className="hidden items-center gap-8 text-[13.5px] text-ink-2 md:flex">
             <a href="#pipeline" onClick={e => { e.preventDefault(); document.getElementById('pipeline')?.scrollIntoView(); }} className="hover:text-ink">Pipeline</a>
@@ -65,20 +65,23 @@ export const Landing: React.FC = () => {
             <a href="#graph" onClick={e => { e.preventDefault(); document.getElementById('graph')?.scrollIntoView(); }} className="hover:text-ink">Reasoning</a>
             <a href="https://github.com/sroshans025/medgraph" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-ink">Source <ArrowUpRight className="h-3.5 w-3.5" /></a>
           </nav>
+          <div className="flex items-center gap-4">
+          <a href="#/login" className="hidden text-[13.5px] text-ink-2 hover:text-ink sm:inline">Sign in</a>
           <button onClick={() => navigate('/app')} className="inline-flex h-9 items-center gap-2 rounded-[3px] bg-ink px-4 text-[13px] font-medium text-paper transition hover:bg-signal">
             Reading room <ArrowRight className="h-3.5 w-3.5" />
           </button>
+          </div>
         </div>
       </header>
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="mx-auto grid max-w-[1240px] items-center gap-14 px-6 pb-24 pt-10 md:px-10 lg:grid-cols-[1fr_minmax(0,560px)] lg:pt-16">
+        <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-14 px-6 pb-24 pt-10 md:px-10 lg:grid-cols-[1fr_minmax(0,560px)] lg:pt-16">
           <div className="rise">
             <p className="label-mono flex items-center gap-2 text-ink-3">
               <span className="inline-block h-[1px] w-8 bg-ink" /> Clinical decision support · chest CR & brain MR
             </p>
-            <h1 className="mt-6 font-display text-[64px] leading-[0.95] tracking-[-0.02em] sm:text-[84px] xl:text-[104px]">
+            <h1 className="mt-6 font-display text-[56px] leading-[0.95] tracking-[-0.02em] sm:text-[84px] xl:text-[104px]">
               Every finding,<br />
               <em className="text-signal">traced</em> back to<br />
               the pixel.
@@ -129,13 +132,13 @@ export const Landing: React.FC = () => {
       </Section>
 
       <Section id="graph" n="3" kicker="Reasoning" title={<>Hover any node to follow the <em>chain</em>.</>} lede="The knowledge graph is the explanation. Two findings from one MRI fan out into differentials, severity and next steps. Every edge is a rule in the builder, not an inference.">
-        <div className="rounded-[3px] border border-ink bg-paper p-6">
+        <div className="rounded-[3px] border border-ink bg-paper p-3 sm:p-6">
           <GraphTrace />
         </div>
       </Section>
 
       <Section n="4" kicker="Workspace" tone="paper2" title={<>Built for the reading room, not the demo reel.</>}>
-        <div className="grid border-t border-ink md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 border-t border-ink md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(([t, d], i) => (
             <div key={t} className={`border-b border-rule py-8 pr-8 ${i % 3 !== 2 ? 'lg:border-r' : ''} ${i % 3 !== 0 ? 'lg:pl-8' : ''}`}>
               <p className="font-mono text-[11px] text-signal">{String(i + 1).padStart(2, '0')}</p>
@@ -147,7 +150,7 @@ export const Landing: React.FC = () => {
       </Section>
 
       <Section n="5" kicker="Limits" title={<>What it will not do.</>}>
-        <div className="grid gap-px overflow-hidden rounded-[3px] border border-ink bg-ink md:grid-cols-3">
+        <div className="grid gap-px overflow-hidden rounded-[3px] border border-ink bg-ink grid-cols-1 md:grid-cols-3">
           {[
             ['Sign for you', 'Every draft is marked physician review required. A study only reaches Signed when a named reviewer signs it.'],
             ['Invent findings', 'Report text is filled from model outputs only. If a region was not detected, the report does not mention it.'],

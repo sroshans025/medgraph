@@ -14,6 +14,7 @@ export function useRoute(): Route {
   useEffect(() => {
     const on = () => setRoute(parse());
     window.addEventListener('hashchange', on);
+    on(); // catch a hash change that happened before this listener attached
     return () => window.removeEventListener('hashchange', on);
   }, []);
   return route;

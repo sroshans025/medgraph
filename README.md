@@ -31,6 +31,12 @@ The web app is split into a public landing page and a radiology **reading room**
 *   **Calibration playground:** drag a raw score and the steepness `k` to see the Platt curve and confidence bands the backend uses.
 *   **Reasoning trace:** hover any graph node to light up its full lineage.
 
+**Sign in** (`#/login`)
+*   Split-screen sign-in with a rotating film panel, show/hide password, validation and a *Request access* mode that captures the reader's name and credentials.
+*   One-click demo account: `reader@medgraph.dev` / `radiology`.
+*   Every `#/app` route is guarded and redirects back to where you were after sign-in. The signed-in reader's name is stamped on report signatures and audit entries.
+*   The preview has no identity provider, so sessions are stored in the browser only. Swap `frontend/src/lib/auth.ts` for your IdP (OIDC/SAML) before any real deployment.
+
 **Reading room** (`#/app`)
 | View | What it does |
 | :--- | :--- |
@@ -121,7 +127,7 @@ npm install
 # Run the frontend in development mode
 npm run dev
 ```
-The React frontend will be running at **`http://localhost:5173`**.
+The React frontend will be running at **`http://localhost:5173`**. Sign in with the demo account `reader@medgraph.dev` / `radiology`.
 
 ---
 

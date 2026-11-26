@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  LayoutGrid, ListOrdered, Plus, Archive, Settings as Cog, Search, CornerDownLeft, ArrowLeft, Check, AlertTriangle, X,
+  LayoutGrid, ListOrdered, Plus, Archive, Settings as Cog, Search, CornerDownLeft, ArrowLeft, Check, AlertTriangle, X, LogOut,
 } from 'lucide-react';
 import { navigate } from '../lib/router';
 import { useWorkspace } from './store';
 import { Kbd, SevPill } from '../components/ui';
 import { getSettings } from '../services/api';
+import { getSession, signOut } from '../lib/auth';
 
 const NAV = [
   { path: '/app', key: 'overview', label: 'Overview', icon: LayoutGrid, hint: 'G O' },
@@ -29,6 +30,7 @@ const Palette: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       { kind: 'cmd' as const, id: 'sample-cr', title: 'Run sample chest radiograph', sub: 'Command', run: () => navigate('/app/new?sample=chest_xray') },
       { kind: 'cmd' as const, id: 'sample-mr', title: 'Run sample brain MRI', sub: 'Command', run: () => navigate('/app/new?sample=brain_mri') },
       { kind: 'cmd' as const, id: 'landing', title: 'Back to landing page', sub: 'Command', run: () => navigate('/') },
+      { kind: 'cmd' as const, id: 'signout', title: 'Sign out', sub: 'Command', run: () => { signOut(); navigate('/login'); } },
     ];
     const studies = cases.map(c => ({
       kind: 'case' as const, id: c.case_id,
@@ -156,10 +158,11 @@ export const Shell: React.FC<{ section: string; children: React.ReactNode }> = (
             <div className="flex h-8 w-8 items-center justify-center rounded-[4px] bg-g-700 font-mono text-[11px] text-g-100">
               {reviewer.replace(/^Dr\.?\s*/, '').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
             </div>
-            <div className="min-w-0 leading-tight">
+            <div className="min-w-0 flex-1 leading-tight">
               <p className="truncate text-[12.5px] text-g-100">{reviewer}</p>
-              <p className="truncate text-[10.5px] text-g-500">{getSettings().credentials}</p>
+              <p className="truncate text-[10.5px] text-g-500" title={getSession()?.email}>{getSettings().credentials}</p>
             </div>
+            <button onClick={() => { signOut(); navigate('/login'); }} title="Sign out" className="flex h-7 w-7 items-center justify-center rounded-[3px] text-g-500 hover:bg-g-800 hover:text-g-100"><LogOut className="h-3.5 w-3.5" /></button>
           </div>
         </div>
       </aside>

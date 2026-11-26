@@ -74,7 +74,7 @@ export const PipelineSection: React.FC = () => {
   const s = STAGES[i];
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr]">
+    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1.1fr]">
       <ol className="border-t border-ink">
         {STAGES.map((st, k) => (
           <li key={st.n}>
@@ -83,7 +83,7 @@ export const PipelineSection: React.FC = () => {
               className={`group relative flex w-full items-baseline gap-5 border-b border-rule py-4 text-left transition ${k === i ? 'text-ink' : 'text-ink-3 hover:text-ink'}`}
             >
               <span className="font-mono text-[11px]">{st.n}</span>
-              <span className="font-display text-[30px] leading-none">{st.name}</span>
+              <span className="font-display text-[26px] leading-none sm:text-[30px]">{st.name}</span>
               <span className="ml-auto font-mono text-[11px]">{st.time}</span>
               {k === i && (
                 <span className="absolute bottom-[-1px] left-0 h-[2px] bg-signal" style={{ width: auto ? undefined : '100%', animation: auto ? 'grow 3.8s linear forwards' : undefined }} />
@@ -130,7 +130,7 @@ export const CalibrationPlayground: React.FC = () => {
   ];
 
   return (
-    <div className="grid items-center gap-10 lg:grid-cols-[1.25fr_1fr]">
+    <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.25fr_1fr]">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
         {bands.map((b, i) => (
           <g key={b.label}>

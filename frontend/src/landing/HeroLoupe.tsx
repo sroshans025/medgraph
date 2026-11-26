@@ -183,7 +183,7 @@ export const HeroLoupe: React.FC = () => {
         </div>
 
         {/* Readout */}
-        <div className="mt-2 grid grid-cols-4 gap-px overflow-hidden rounded-[2px] bg-g-700 font-mono text-[10.5px]">
+        <div className="mt-2 grid grid-cols-2 gap-px sm:grid-cols-4 overflow-hidden rounded-[2px] bg-g-700 font-mono text-[10.5px]">
           {[
             ['POS mm', `${mm(pos.x)}, ${mm(pos.y)}`],
             ['REGION', regionAt(mod, pos.x, pos.y)],
