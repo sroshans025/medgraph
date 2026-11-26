@@ -100,7 +100,7 @@ export const GraphView: React.FC<{ id: string }> = ({ id }) => {
         <SevPill sev={c.severity} size="md" />
         <div className="ml-auto flex flex-wrap gap-1">
           {COLS.map(t => (
-            <button key={t} onClick={() => setHidden(h => { const n = new Set(h); n.has(t) ? n.delete(t) : n.add(t); return n; })}
+            <button key={t} onClick={() => setHidden(h => { const n = new Set(h); if (n.has(t)) n.delete(t); else n.add(t); return n; })}
               className={`h-7 rounded-[3px] border px-2.5 text-[11.5px] ${hidden.has(t) ? 'border-g-700 text-g-500 line-through' : 'border-g-500 text-g-200'}`}>
               {t === 'Recommendation' ? 'Actions' : t}
             </button>

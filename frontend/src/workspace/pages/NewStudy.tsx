@@ -93,7 +93,7 @@ export const NewStudy: React.FC<{ sample?: string | null }> = ({ sample }) => {
               <div
                 onDragOver={e => { e.preventDefault(); setDrag(true); }}
                 onDragLeave={() => setDrag(false)}
-                onDrop={e => { e.preventDefault(); setDrag(false); e.dataTransfer.files[0] && pick(e.dataTransfer.files[0]); }}
+                onDrop={e => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files[0]) pick(e.dataTransfer.files[0]); }}
                 onClick={() => !file && inputRef.current?.click()}
                 className={`relative flex min-h-[220px] flex-col items-center justify-center rounded-[4px] border border-dashed transition ${drag ? 'border-signal bg-signal/5' : file ? 'border-g-600 bg-g-950' : 'cursor-pointer border-g-600 bg-g-950 hover:border-g-400'}`}
               >

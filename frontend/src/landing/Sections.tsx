@@ -189,20 +189,22 @@ const DEMO_FINDINGS: Finding[] = [
   { name: 'Hyperintensity', location: 'Right Temporal Lobe', probability: 0.71, severity: 'Moderate', evidence: 'T2/FLAIR Hyperintense Lesion', box: null },
 ];
 
+const TRACE_COLS = ['Finding', 'Disease', 'Severity', 'Recommendation'];
+const TRACE_X = [20, 270, 520, 700];
+const TRACE_W = [210, 200, 150, 260];
+const W_TRACE = 980, H_TRACE = 440;
+
 export const GraphTrace: React.FC = () => {
+  const cols = TRACE_COLS, colX = TRACE_X, W = W_TRACE, H = H_TRACE;
   const kg = useMemo(() => buildGraph(DEMO_FINDINGS, 'brain_mri'), []);
   const [focus, setFocus] = useState<string | null>(null);
-  const cols = ['Finding', 'Disease', 'Severity', 'Recommendation'];
-  const W = 980, H = 440;
-  const colX = [20, 270, 520, 700];
-  const colW = [210, 200, 150, 260];
 
   const layout = useMemo(() => {
     const pos: Record<string, { x: number; y: number; w: number; h: number }> = {};
-    cols.forEach((t, ci) => {
+    TRACE_COLS.forEach((t, ci) => {
       const list = kg.nodes.filter(n => n.type === t);
-      const gap = H / (list.length + 1);
-      list.forEach((n, i) => { pos[n.id] = { x: colX[ci], y: gap * (i + 1) - 18, w: colW[ci], h: 36 }; });
+      const gap = H_TRACE / (list.length + 1);
+      list.forEach((n, i) => { pos[n.id] = { x: TRACE_X[ci], y: gap * (i + 1) - 18, w: TRACE_W[ci], h: 36 }; });
     });
     return pos;
   }, [kg]);
