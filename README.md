@@ -232,7 +232,7 @@ One-time setup (about 5 minutes):
 1. Sign in at [render.com](https://render.com) with GitHub.
 2. **New → Blueprint** → select `sroshans025/medgraph`. Render reads `render.yaml`, which builds `backend/Dockerfile` on the free plan and generates a random `JWT_SECRET`.
 3. Click **Apply**. The first build takes about 10 minutes. The API is then live at
-   `https://medgraph-api.onrender.com/api/v1/health` (docs at `/docs`; Render may add a suffix to the name if it is taken).
+   `https://<your-service>.onrender.com/api/v1/health` (docs at `/docs`). The reference deployment is [medgraph-api-g1gj.onrender.com](https://medgraph-api-g1gj.onrender.com/docs).
 
 Every push to `main` redeploys automatically.
 
@@ -243,7 +243,7 @@ Every push to `main` redeploys automatically.
 ### 2. Frontend → Vercel, connected to the API
 
 1. Vercel → **Add New → Project** → import `sroshans025/medgraph`. The root `vercel.json` already builds `frontend/`.
-2. **Settings → Environment Variables** → add `VITE_API_URL` = `https://medgraph-api.onrender.com/api/v1` (use your Render URL) (Production and Preview).
+2. **Settings → Environment Variables** → add `VITE_API_URL` = `https://medgraph-api-g1gj.onrender.com/api/v1` (or your own Render URL) (Production and Preview).
 3. **Deployments** → latest → **⋯ → Redeploy** (environment variables are baked in at build time).
 4. Open the site → **Sign in**: the badge should read **secure server**. If the API is asleep or unreachable, the app falls back to demo mode.
 
