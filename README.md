@@ -17,8 +17,35 @@ MedGraph AI is a premium, end-to-end clinical decision support platform that com
     *   **Platt-scaled Confidence Calibration:** Calibrates confidence scores based on modality and model outputs.
     *   **Clinical Knowledge Graph:** Dynamically maps findings, clinical concepts, and next-step recommendations.
     *   **Zero-Hallucination Reasoning Engine:** Synthesizes structured clinical interpretations grounded strictly in model findings.
-*   **Interactive Frontend:** Built with React 19, TypeScript, TailwindCSS, Recharts, and Lucide React.
-*   **Versioned Reporting:** Allows physicians to edit reports with local version history and auditable change logs.
+*   **Versioned Reporting:** Physicians edit drafts as numbered versions with revision notes; signing locks a report, and editing after sign-off reopens it.
+
+---
+
+## 🖥️ Frontend (v2)
+
+The web app is split into a public landing page and a radiology **reading room**.
+
+**Landing page** (`#/`)
+*   **Diagnostic loupe hero:** move the cursor over a rendered chest film or brain MRI. The loupe magnifies the region and reveals detections, heat maps and live readouts (position in mm, region, signal). Scroll to resize, click to lock.
+*   **Pipeline walkthrough:** the six stages with the structured output each one produces.
+*   **Calibration playground:** drag a raw score and the steepness `k` to see the Platt curve and confidence bands the backend uses.
+*   **Reasoning trace:** hover any graph node to light up its full lineage.
+
+**Reading room** (`#/app`)
+| View | What it does |
+| :--- | :--- |
+| Overview | KPIs, triage queue, severity mix, 7-day volume by modality, activity feed |
+| Worklist | Priority-sorted queue (severity + confidence + wait time), status filters, `j`/`k` keyboard navigation |
+| Study viewer | Zoom/pan, window/level, invert, measurement ruler in mm, detection boxes linked both ways to findings, calibration breakdown |
+| Report | Edit → versioned save, sign/reopen, print-to-PDF layout, `.txt` export |
+| Audit | Per-study event log and report version history |
+| Reasoning graph | React Flow graph with lineage highlighting, node inspector and type filters |
+| Archive | Thumbnail grid, side-by-side compare of two studies, CSV export |
+| Settings | API URL, reviewer identity, demo toggle, keyboard reference |
+
+`⌘K` opens a command palette for jumping to any patient, study or action.
+
+**Demo engine.** When no API is reachable (for example on the hosted preview, where browsers block `http://localhost` from an `https` page), the app switches to an in-browser port of the reasoning pipeline in `frontend/src/lib/engine.ts`. It applies the same location heuristics, severity grading, Platt calibration, graph rules and report templates as the backend, and runs them on simulated, deterministic vision output over procedurally rendered scans. These are synthetic; no patient data is used. Set `VITE_API_URL` or use Settings to point at a live backend.
 
 ---
 

@@ -1,99 +1,159 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-    --font-heading: 'Outfit', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-  }
+@theme {
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
+  /* Landing — paper & ink */
+  --color-paper: #f2efe7;
+  --color-paper-2: #e9e5da;
+  --color-ink: #141518;
+  --color-ink-2: #3b3d42;
+  --color-ink-3: #6d6f74;
+  --color-rule: #d4cfc2;
+
+  /* One accent: radiograph marker orange */
+  --color-signal: #e4572e;
+  --color-signal-dim: #b8432180;
+
+  /* Reading room — graphite */
+  --color-g-950: #0b0c0e;
+  --color-g-900: #111215;
+  --color-g-850: #16181b;
+  --color-g-800: #1c1e22;
+  --color-g-700: #26292e;
+  --color-g-600: #353940;
+  --color-g-500: #565b63;
+  --color-g-400: #868b93;
+  --color-g-300: #b3b6bb;
+  --color-g-200: #dcdcd8;
+  --color-g-100: #efede8;
+
+  /* Severity scale */
+  --color-sev-critical: #e5484d;
+  --color-sev-severe: #f2793a;
+  --color-sev-moderate: #d9b03f;
+  --color-sev-mild: #58a6a6;
+  --color-sev-minimal: #7aa36f;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
   body {
-    background-color: #060913;
-    color: #f3f4f6;
-    font-family: var(--font-sans);
-    font-size: 15px;
     margin: 0;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    background: var(--color-g-950);
+    color: var(--color-g-100);
     overflow-x: hidden;
   }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
-    color: #ffffff;
-  }
+  ::selection { background: var(--color-signal); color: #fff; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible { outline: 1.5px solid var(--color-signal); outline-offset: 2px; }
 }
 
-/* Glassmorphism card utility classes */
-.glass-panel {
-  background: rgba(13, 20, 38, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+/* ——— Shared primitives ——— */
+.label-mono {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
-
-.glass-panel-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-panel-hover:hover {
-  transform: translateY(-2px);
-  background: rgba(17, 27, 51, 0.85);
-  border-color: rgba(168, 85, 247, 0.3);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(168, 85, 247, 0.1);
-}
-
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
+.tick-rule {
+  background-image: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 8px);
   height: 6px;
+  opacity: 0.35;
+}
+.panel {
+  background: var(--color-g-900);
+  border: 1px solid var(--color-g-700);
+  border-radius: 6px;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-g-700);
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px;
+  font-size: 12.5px; font-weight: 500;
+  border-radius: 4px;
+  border: 1px solid var(--color-g-600);
+  background: var(--color-g-800);
+  color: var(--color-g-100);
+  transition: background .15s, border-color .15s;
+}
+.btn:hover:not(:disabled) { background: var(--color-g-700); border-color: var(--color-g-500); }
+.btn:disabled { opacity: .4; }
+.btn-primary { background: var(--color-signal); border-color: var(--color-signal); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #f0663c; border-color: #f0663c; }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--color-g-300); }
+.btn-ghost:hover:not(:disabled) { background: var(--color-g-800); border-color: var(--color-g-700); color: var(--color-g-100); }
+.field {
+  width: 100%; height: 34px; padding: 0 10px;
+  background: var(--color-g-950);
+  border: 1px solid var(--color-g-600);
+  border-radius: 4px;
+  color: var(--color-g-100);
+  font-size: 13px;
+}
+.field:focus { outline: none; border-color: var(--color-signal); }
+textarea.field { height: auto; padding: 8px 10px; line-height: 1.55; resize: vertical; }
+
+input[type=range].slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 2px; background: var(--color-g-600); border-radius: 2px;
+}
+input[type=range].slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px; border-radius: 2px;
+  background: var(--color-g-100); border: 2px solid var(--color-g-950); cursor: grab;
+}
+input[type=range].slider::-moz-range-thumb {
+  width: 10px; height: 10px; border-radius: 2px; background: var(--color-g-100); border: 2px solid var(--color-g-950);
+}
+input[type=range].slider-ink { background: var(--color-rule); }
+input[type=range].slider-ink::-webkit-slider-thumb { background: var(--color-signal); border-color: var(--color-paper); width: 14px; height: 14px; }
+
+/* ——— Motion ——— */
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .45s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes scanline { 0% { transform: translateY(-10%); } 100% { transform: translateY(110%); } }
+.scanline { animation: scanline 2.2s linear infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+.blink { animation: blink 1.4s steps(2) infinite; }
+@keyframes dash { to { stroke-dashoffset: -20; } }
+.flow { stroke-dasharray: 4 6; animation: dash 1s linear infinite; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+.marquee { animation: marquee 40s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-::-webkit-scrollbar-track {
-  background: #060913;
-}
+/* Scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-g-700); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-g-500); }
 
-::-webkit-scrollbar-thumb {
-  background: #1f293d;
-  border-radius: 3px;
-}
+/* React Flow in the reading room */
+.react-flow__attribution { display: none; }
+.react-flow__controls { box-shadow: none !important; border: 1px solid var(--color-g-700); border-radius: 4px; overflow: hidden; }
+.react-flow__controls-button { background: var(--color-g-850) !important; border-bottom: 1px solid var(--color-g-700) !important; fill: var(--color-g-300) !important; }
+.react-flow__controls-button:hover { background: var(--color-g-700) !important; }
+.react-flow__handle { opacity: 0; }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #a855f7;
+/* Print: report only */
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
 }
-
-/* Custom React Flow styling overrides for clinical look */
-.react-flow__node {
-  border-radius: 10px !important;
-  font-family: 'Inter', sans-serif;
-}
-
-.react-flow__handle {
-  background: #06b6d4 !important;
-  width: 8px !important;
-  height: 8px !important;
-  border: 2px solid #060913 !important;
-}
-
-.react-flow__edge-path {
-  stroke-width: 2.5px !important;
-}
-
-.react-flow__controls {
-  background: rgba(13, 20, 38, 0.9) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 8px !important;
-}
-
-.react-flow__controls-button {
-  background: transparent !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  color: #9ca3af !important;
-  fill: #9ca3af !important;
-}
-
-.react-flow__controls-button:hover {
-  background: rgba(168, 85, 247, 0.2) !important;
-  color: #ffffff !important;
-  fill: #ffffff !important;
-}
+.print-only { display: none; }
