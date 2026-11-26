@@ -1,0 +1,11 @@
+.git
+.venv
+**/__pycache__
+**/node_modules
+frontend
+training
+tests
+storage
+*.db
+.coverage
+.pytest_cache

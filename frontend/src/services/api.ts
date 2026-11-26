@@ -141,7 +141,7 @@ export async function detectMode(): Promise<Mode> {
   const s = getSettings();
   if (s.forceDemo) return (mode = 'demo');
   try {
-    await axios.get(`${s.apiUrl}/health`, { timeout: 1500 });
+    await axios.get(`${s.apiUrl}/health`, { timeout: 4000 });
     mode = 'live';
   } catch {
     mode = 'demo';

@@ -1,0 +1,48 @@
+name: Deploy backend to Hugging Face
+
+# Runs after a push to main touches the backend. Needs two repository settings:
+#   Secrets   → HF_TOKEN  (a Hugging Face token with write access)
+#   Variables → HF_SPACE  (e.g. your-hf-username/medgraph-api)
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "models/**"
+      - "requirements.txt"
+      - "deploy/huggingface/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: ${{ vars.HF_SPACE != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble Space bundle
+        run: |
+          mkdir space
+          cp -r backend models requirements.txt space/
+          cp deploy/huggingface/README.md space/README.md
+          # Hugging Face routes traffic to port 7860
+          sed 's/PORT=8000/PORT=7860/' backend/Dockerfile > space/Dockerfile
+          grep -q "PORT=7860" space/Dockerfile
+          find space -name "__pycache__" -prune -exec rm -rf {} +
+
+      - name: Push to Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          cd space
+          git init -q -b main
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git lfs install --local
+          git lfs track "*.pt"
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA::7} from GitHub"
+          HF_USER="${HF_SPACE%%/*}"
+          git push --force "https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" main

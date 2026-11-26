@@ -1,8 +1,36 @@
 # MedGraph AI 🧠🩻
 
+[![CI](https://github.com/sroshans025/medgraph/actions/workflows/ci.yml/badge.svg)](https://github.com/sroshans025/medgraph/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.11-3776AB)
+![React](https://img.shields.io/badge/react-19-149ECA)
+![License](https://img.shields.io/badge/use-research%20only-e4572e)
+
 > **Explainable Clinical Decision Support System for Medical Imaging**
 
+<p align="center">
+  <img src="docs/screenshots/landing.png" alt="MedGraph landing page" width="100%">
+</p>
+
 MedGraph AI is a premium, end-to-end clinical decision support platform that combines Deep Learning vision models (YOLO & MONAI U-Net) with a clinical knowledge graph and reasoning engine to provide explainable diagnostic reports for Chest X-Rays and Brain MRIs.
+
+---
+
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td width="42%"><img src="docs/screenshots/loupe.gif" alt="Diagnostic loupe hero"><br><sub><b>Landing hero.</b> The loupe magnifies the film and reveals detections and live readouts.</sub></td>
+    <td><img src="docs/screenshots/viewer.png" alt="Study viewer"><br><sub><b>Study viewer.</b> Zoom/pan, window/level, mm ruler, boxes linked to findings, calibration breakdown.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/worklist.png" alt="Worklist"><br><sub><b>Worklist.</b> Priority-sorted triage queue.</sub></td>
+    <td><img src="docs/screenshots/overview.png" alt="Overview"><br><sub><b>Overview.</b> KPIs, triage queue, severity mix, volume and activity.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/graph.png" alt="Reasoning graph"><br><sub><b>Reasoning graph.</b> Findings → differentials → severity → next steps.</sub></td>
+    <td><img src="docs/screenshots/login.png" alt="Sign in"><br><sub><b>Sign in.</b> Server accounts when the API is online, demo mode otherwise.</sub></td>
+  </tr>
+</table>
 
 ---
 
@@ -167,10 +195,10 @@ Vercel protects deployments with **Vercel Authentication** by default, so only m
 You can run the entire stack (FastAPI + React Vite + Database) using Docker Compose:
 
 ```bash
-# Build and run the containers
-docker-compose up --build
+cp .env.example .env          # then set JWT_SECRET in .env
+docker compose up --build
 ```
-This mounts the backend container on port `8000` and the frontend container on port `3000`.
+The backend runs on port `8000` and the frontend on port `3000`. The SQLite database is kept in the `backend-data` volume, so accounts and cases survive restarts.
 
 ---
 
@@ -195,5 +223,45 @@ Case, history, analyze, report and overlay endpoints require `Authorization: Bea
 
 ## 🌐 Production Deployment
 
-*   **Frontend (Vercel):** Automatically configured via the root-level `vercel.json` to build and serve the static Vite bundle on Vercel at `https://medgraph-nu.vercel.app`.
-*   **Backend:** Due to the large size of deep learning packages (`torch`, `transformers`, etc. total 5.3 GB), the backend must be deployed on a dedicated server (e.g., Render, AWS EC2, or Docker VPS) rather than serverless functions.
+The frontend and backend deploy separately: the React app as static files on **Vercel**, and the FastAPI service as a Docker container on **Hugging Face Spaces** (free CPU tier with 16 GB RAM, enough for PyTorch, which Render's and Railway's free tiers are not).
+
+### 1. Backend → Hugging Face Spaces
+
+One-time setup (about 5 minutes):
+
+1. Create an account at [huggingface.co](https://huggingface.co) → **New Space** → name it `medgraph-api`, SDK **Docker**, template **Blank**, hardware **CPU basic (free)**.
+2. In the Space → **Settings → Variables and secrets**, add a **secret** `JWT_SECRET` with a long random value:
+   `python -c "import secrets; print(secrets.token_urlsafe(48))"`
+3. On Hugging Face → **Settings → Access Tokens** → create a token with **Write** access.
+4. In this GitHub repo → **Settings → Secrets and variables → Actions**:
+   *   **Secrets** tab → `HF_TOKEN` = the token from step 3
+   *   **Variables** tab → `HF_SPACE` = `<your-hf-username>/medgraph-api`
+5. GitHub → **Actions → Deploy backend to Hugging Face → Run workflow**.
+
+From then on, every push to `main` that touches `backend/`, `models/` or `requirements.txt` redeploys the Space automatically (`.github/workflows/deploy-backend.yml`). The first build takes about 10 minutes. The API is then live at
+`https://<your-hf-username>-medgraph-api.hf.space/api/v1/health` (docs at `/docs`).
+
+> Free Spaces sleep after 48 h without traffic and wake on the next request (about 30–60 s). The SQLite database lives in the container, so cases and accounts reset when the Space restarts; the demo account is re-created automatically. Attach paid persistent storage or a managed database for anything long-lived.
+
+### 2. Frontend → Vercel, connected to the API
+
+1. Vercel → **Add New → Project** → import `sroshans025/medgraph`. The root `vercel.json` already builds `frontend/`.
+2. **Settings → Environment Variables** → add `VITE_API_URL` = `https://<your-hf-username>-medgraph-api.hf.space/api/v1` (Production and Preview).
+3. **Deployments** → latest → **⋯ → Redeploy** (environment variables are baked in at build time).
+4. Open the site → **Sign in**: the badge should read **secure server**. If the API is asleep or unreachable, the app falls back to demo mode.
+
+### 3. Custom domain (optional)
+
+1. Buy a domain (Cloudflare Registrar, Namecheap, Porkbun; a `.dev` costs about $10–12 a year). Free student option: the GitHub Student Developer Pack includes a free `.me`/`.tech` domain.
+2. Vercel → project → **Settings → Domains** → add `medgraph.yourdomain.dev`.
+3. At your DNS provider add the record Vercel shows, usually a `CNAME` from `medgraph` to `cname.vercel-dns.com`. HTTPS is issued automatically within minutes.
+4. If you restrict CORS (`ALLOWED_ORIGINS`), add the new domain there too.
+
+### 4. Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request:
+*   **Backend tests**: the full pytest suite on Python 3.11 with CPU-only PyTorch
+*   **Frontend**: `oxlint` and the production Vite build
+*   **Docker**: builds `backend/Dockerfile`, so a broken image is caught before it reaches the Space
+
+The badge at the top of this README shows the result for `main`.

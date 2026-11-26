@@ -9,14 +9,13 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite+aiosqlite:////app/medgraph.db
       - YOLO_MODEL_PATH=
       - MONAI_MODEL_PATH=
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
       - SEED_DEMO_USER=${SEED_DEMO_USER:-true}
       - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-true}
     volumes:
-      - backend-data:/app
+      - backend-data:/app/data
     restart: always
 
   frontend:

@@ -16,6 +16,10 @@ pandas>=2.2.0
 networkx>=3.2.0
 opencv-python-headless>=4.9.0.80
 
+# Medical image formats
+pydicom>=2.4.0
+nibabel>=5.2.0
+
 # Deep Learning & Vision Engine
 torch>=2.2.0
 torchvision>=0.17.0
