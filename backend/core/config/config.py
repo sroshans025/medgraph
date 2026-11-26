@@ -1,6 +1,8 @@
 import os
+import secrets
 from pathlib import Path
 from typing import List
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -23,6 +25,17 @@ class Settings(BaseSettings):
     # Database settings
     DATABASE_URL: str = "sqlite+aiosqlite:///./medgraph.db"
     
+    # Authentication
+    # Set JWT_SECRET in .env for production; the random default means tokens
+    # stop working whenever the server restarts.
+    JWT_SECRET: str = Field(default_factory=lambda: secrets.token_urlsafe(48))
+    JWT_EXPIRE_MINUTES: int = 720
+    AUTH_REQUIRED: bool = True
+    ALLOW_REGISTRATION: bool = True
+    SEED_DEMO_USER: bool = True
+    DEMO_USER_EMAIL: str = "reader@medgraph.dev"
+    DEMO_USER_PASSWORD: str = "radiology"
+
     # CORS settings
     ALLOWED_ORIGINS: List[str] = ["*"]
     

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { DEMO_ACCOUNT, signIn } from '../lib/auth';
+import { DEMO_ACCOUNT, register, signIn } from '../lib/auth';
+import { detectMode, type Mode } from '../services/api';
 import { navigate } from '../lib/router';
 import { brainMriSvg, chestXraySvg, svgToDataUrl } from '../lib/scanArt';
 
@@ -19,6 +20,9 @@ export const Login: React.FC<{ next?: string | null }> = ({ next }) => {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [film, setFilm] = useState(0);
+  const [mode_, setMode_] = useState<Mode | null>(null);
+
+  useEffect(() => { detectMode().then(setMode_); }, []);
 
   const films = useMemo(() => FILMS.map(f => svgToDataUrl(f.src())), []);
   useEffect(() => {
@@ -31,9 +35,9 @@ export const Login: React.FC<{ next?: string | null }> = ({ next }) => {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null); setBusy(true);
-    await new Promise(r => setTimeout(r, 450));
     try {
-      signIn(email, password, mode === 'request' ? name : undefined, mode === 'request' ? role : undefined);
+      if (mode === 'request') await register(email, password, name, role);
+      else await signIn(email, password);
       go();
     } catch (err: any) {
       setError(err.message);
@@ -104,7 +108,15 @@ export const Login: React.FC<{ next?: string | null }> = ({ next }) => {
         </div>
 
         <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center py-12">
-          <p className="label-mono text-ink-3"><span className="text-signal">§</span> {mode === 'signin' ? 'Sign in' : 'Request access'}</p>
+          <div className="flex items-center justify-between">
+            <p className="label-mono text-ink-3"><span className="text-signal">§</span> {mode === 'signin' ? 'Sign in' : 'Request access'}</p>
+            {mode_ && (
+              <span className={`label-mono flex items-center gap-1.5 rounded-[2px] border px-2 py-0.5 ${mode_ === 'live' ? 'border-[#5a8a52]/40 text-[#3f6b38]' : 'border-rule text-ink-3'}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${mode_ === 'live' ? 'bg-[#5a8a52]' : 'bg-[#c99a2e]'}`} />
+                {mode_ === 'live' ? 'secure server' : 'demo mode'}
+              </span>
+            )}
+          </div>
           <h1 className="mt-3 font-display text-[52px] leading-[0.98] tracking-[-0.01em]">
             {mode === 'signin' ? <>Welcome back to the <em>reading room</em>.</> : <>Set up your <em>reader</em> profile.</>}
           </h1>
@@ -130,7 +142,7 @@ export const Login: React.FC<{ next?: string | null }> = ({ next }) => {
               <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@hospital.org" className="mt-2 h-11 w-full rounded-[3px] border border-rule bg-paper px-3 text-[14px] placeholder:text-ink-3/60 focus:border-ink focus:outline-none" />
             </label>
             <label className="block">
-              <span className="label-mono flex justify-between text-ink-3"><span>Password</span>{mode === 'signin' && <span className="normal-case tracking-normal text-ink-3">min. 6 characters</span>}</span>
+              <span className="label-mono flex justify-between text-ink-3"><span>Password</span><span className="normal-case tracking-normal text-ink-3">{mode === 'signin' ? 'min. 6 characters' : 'min. 8 characters'}</span></span>
               <div className="relative mt-2">
                 <input type={show ? 'text' : 'password'} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} className="h-11 w-full rounded-[3px] border border-rule bg-paper px-3 pr-11 text-[14px] focus:border-ink focus:outline-none" />
                 <button type="button" onClick={() => setShow(s => !s)} className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center text-ink-3 hover:text-ink" aria-label={show ? 'Hide password' : 'Show password'}>
@@ -166,7 +178,10 @@ export const Login: React.FC<{ next?: string | null }> = ({ next }) => {
         </div>
 
         <p className="mx-auto max-w-[400px] text-center text-[11.5px] leading-relaxed text-ink-3">
-          Preview build: profiles are kept in this browser only and nothing is sent to a server. Research prototype, not for diagnostic use.
+          {mode_ === 'live'
+            ? 'Connected to the MedGraph API: passwords are checked server-side against salted PBKDF2 hashes and sessions use signed, expiring tokens.'
+            : 'Demo mode: no API is reachable, so profiles stay in this browser and nothing is sent to a server.'}{' '}
+          Research prototype, not for diagnostic use.
         </p>
       </main>
     </div>

@@ -143,3 +143,20 @@ class AuditLogModel(Base):
     severity = Column(String(20), nullable=False)
 
     case = relationship("CaseModel", back_populates="audit_logs")
+
+
+class UserModel(Base):
+    """
+    Reader accounts. Passwords are stored as salted PBKDF2-SHA256 hashes.
+    """
+    __tablename__ = "users"
+
+    id = Column(String(36), primary_key=True, index=True)
+    email = Column(String(254), unique=True, nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    credentials = Column(String(100), nullable=False, default="MD, Radiology")
+    role = Column(String(20), nullable=False, default="reader")  # reader | admin
+    password_hash = Column(String(255), nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_login_at = Column(DateTime, nullable=True)

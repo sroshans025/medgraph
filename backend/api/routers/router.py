@@ -30,6 +30,8 @@ from backend.services.models.reasoning.confidence.calibrator import ConfidenceCa
 from backend.services.models.reasoning.reasoner import ClinicalReasoningEngine
 from backend.services.models.reasoning.report_engine.generator import GroundedReportGenerator
 from backend.core.config.config import settings
+from backend.api.routers.auth import get_current_user, get_current_user_for_media
+from backend.services.models.storage.database.models import UserModel
 
 router = APIRouter()
 preprocessor = MedicalImagePreprocessor()
@@ -124,7 +126,8 @@ async def analyze_scan(
     file: UploadFile = File(...),
     patient_id: str = Form(...),
     modality_override: Optional[str] = Form(None),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    user: Optional[UserModel] = Depends(get_current_user),
 ) -> DiagnosticResult:
     """
     Uploads and processes a medical scan file, running model prediction,
@@ -195,7 +198,7 @@ async def analyze_scan(
     return result
 
 @router.get("/overlay/{case_id}")
-async def get_overlay(case_id: str) -> FileResponse:
+async def get_overlay(case_id: str, user: Optional[UserModel] = Depends(get_current_user_for_media)) -> FileResponse:
     """
     Serves the annotated scan overlay PNG file for a specific case.
     """
@@ -208,7 +211,7 @@ async def get_overlay(case_id: str) -> FileResponse:
     return FileResponse(str(overlay_path), media_type="image/png")
 
 @router.get("/case/{case_id}", response_model=DiagnosticResult)
-async def get_case(case_id: str, db: AsyncSession = Depends(get_db)) -> DiagnosticResult:
+async def get_case(case_id: str, db: AsyncSession = Depends(get_db), user: Optional[UserModel] = Depends(get_current_user)) -> DiagnosticResult:
     """
     Retrieves the clinical details and diagnostic results of a past case.
     """
@@ -222,7 +225,7 @@ async def get_case(case_id: str, db: AsyncSession = Depends(get_db)) -> Diagnost
     return result
 
 @router.get("/history", response_model=List[DiagnosticResult])
-async def get_history(db: AsyncSession = Depends(get_db)) -> List[DiagnosticResult]:
+async def get_history(db: AsyncSession = Depends(get_db), user: Optional[UserModel] = Depends(get_current_user)) -> List[DiagnosticResult]:
     """
     Returns a history of all analyzed scans and cases.
     """
@@ -233,7 +236,8 @@ async def get_history(db: AsyncSession = Depends(get_db)) -> List[DiagnosticResu
 async def update_report(
     case_id: str,
     request: ReportEditRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    user: Optional[UserModel] = Depends(get_current_user),
 ) -> DiagnosticResult:
     """
     Edits a report's findings, saving modifications to report history.
@@ -249,7 +253,7 @@ async def update_report(
     audit_manager = AuditManager(db)
     await audit_manager.log_report_edit(
         case_id=case_id,
-        editor_id="physician_user",
+        editor_id=user.email if user else "physician_user",
         original_report_schema=current_case.report,
         edited_report_schema=request.edited_report,
         doctor_notes=request.doctor_notes

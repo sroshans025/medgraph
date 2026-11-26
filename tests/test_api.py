@@ -38,6 +38,18 @@ async def setup_test_database():
 
 client = TestClient(app)
 
+
+@pytest.fixture(autouse=True, scope="module")
+def authenticated_client(setup_test_database):
+    """Registers a reader and attaches its bearer token to the shared client."""
+    resp = client.post("/api/v1/auth/register", json={
+        "email": "tester@medgraph.dev", "password": "correct-horse", "name": "Dr. Test Reader",
+    })
+    assert resp.status_code == 201, resp.text
+    client.headers["Authorization"] = f"Bearer {resp.json()['access_token']}"
+    yield
+    client.headers.pop("Authorization", None)
+
 def test_health_check() -> None:
     """Tests health and status endpoints."""
     response = client.get("/")
@@ -125,3 +137,89 @@ def test_analyze_override(mock_png_bytes: bytes) -> None:
     # Overrode modality detection
     assert res_data["modality"] == "brain_mri"
     assert res_data["severity"] == "Critical"
+
+
+
+# ───────────────────────── Authentication ─────────────────────────
+
+def _anon() -> TestClient:
+    return TestClient(app)
+
+
+def test_protected_routes_require_token() -> None:
+    anon = _anon()
+    for path in ("/api/v1/history", "/api/v1/case/does-not-exist", "/api/v1/auth/me"):
+        assert anon.get(path).status_code == 401
+    assert anon.get("/api/v1/health").status_code == 200
+
+
+def test_register_login_and_me() -> None:
+    anon = _anon()
+    reg = anon.post("/api/v1/auth/register", json={"email": "Jane@Hospital.org", "password": "s3cure-pass", "name": "Dr. Jane Okafor"})
+    assert reg.status_code == 201
+    assert reg.json()["user"]["email"] == "jane@hospital.org"
+
+    dup = anon.post("/api/v1/auth/register", json={"email": "jane@hospital.org", "password": "another-pass", "name": "Dup"})
+    assert dup.status_code == 409
+
+    bad = anon.post("/api/v1/auth/login", json={"email": "jane@hospital.org", "password": "wrong-pass"})
+    assert bad.status_code == 401
+    unknown = anon.post("/api/v1/auth/login", json={"email": "nobody@hospital.org", "password": "wrong-pass"})
+    assert unknown.json()["detail"] == bad.json()["detail"]
+
+    ok = anon.post("/api/v1/auth/login", json={"email": "jane@hospital.org", "password": "s3cure-pass"})
+    assert ok.status_code == 200
+    me = anon.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {ok.json()['access_token']}"})
+    assert me.status_code == 200 and me.json()["name"] == "Dr. Jane Okafor"
+
+
+def test_register_validation() -> None:
+    anon = _anon()
+    assert anon.post("/api/v1/auth/register", json={"email": "not-an-email", "password": "longenough", "name": "X Y"}).status_code == 422
+    assert anon.post("/api/v1/auth/register", json={"email": "a@b.co", "password": "short", "name": "X Y"}).status_code == 422
+
+
+def test_demo_account_is_seeded_on_login() -> None:
+    resp = _anon().post("/api/v1/auth/login", json={"email": "reader@medgraph.dev", "password": "radiology"})
+    assert resp.status_code == 200
+    assert resp.json()["user"]["name"] == "Dr. A. Raman"
+
+
+def test_tampered_and_expired_tokens_rejected(monkeypatch) -> None:
+    from backend.core import security
+    from backend.core.config.config import settings
+
+    token = client.headers["Authorization"].split()[1]
+    head, body, sig = token.split(".")
+    tampered = f"{head}.{body}.{sig[:-2]}AA"
+    assert _anon().get("/api/v1/history", headers={"Authorization": f"Bearer {tampered}"}).status_code == 401
+
+    monkeypatch.setattr(settings, "JWT_EXPIRE_MINUTES", -1)
+    expired = security.create_access_token("someone")
+    assert security.decode_access_token(expired) is None
+
+
+def test_password_hashing_roundtrip() -> None:
+    from backend.core.security import hash_password, verify_password
+    h = hash_password("radiology")
+    assert h.startswith("pbkdf2_sha256$") and "radiology" not in h
+    assert verify_password("radiology", h)
+    assert not verify_password("Radiology", h)
+    assert not verify_password("x", "garbage")
+
+
+def test_report_edit_records_editor(mock_png_bytes: bytes) -> None:
+    files = {"file": ("scan.png", io.BytesIO(mock_png_bytes), "image/png")}
+    created = client.post("/api/v1/analyze", files=files, data={"patient_id": "PT-AUTH"})
+    assert created.status_code == 201
+    case = created.json()
+    overlay = _anon().get(f"/api/v1/overlay/{case['case_id']}")
+    assert overlay.status_code == 401
+    token = client.headers["Authorization"].split()[1]
+    assert _anon().get(f"/api/v1/overlay/{case['case_id']}", params={"token": token}).status_code == 200
+
+
+def test_auth_can_be_disabled(monkeypatch) -> None:
+    from backend.core.config.config import settings
+    monkeypatch.setattr(settings, "AUTH_REQUIRED", False)
+    assert _anon().get("/api/v1/history").status_code == 200

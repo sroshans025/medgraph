@@ -27,12 +27,10 @@ def test_brain_unet_fallback() -> None:
     """Tests the Brain MRI MONAI model fallback segmenter."""
     model = BrainMriMonaiModel()
     
-    # 1. Clean image -> should fall back to circular lesion mock
+    # 1. Clean image -> no bright region, so no findings are invented
     clean_image = np.zeros((512, 512), dtype=np.float32)
     findings = model.predict(clean_image, {})
-    assert len(findings) == 1
-    assert findings[0]["name"] == "Hyperintensity"
-    assert findings[0]["box"] == [200.0, 150.0, 281.0, 231.0]
+    assert findings == []
     
     # 2. Image with high intensity lesion spot -> should detect contour around it
     lesion_image = np.zeros((512, 512), dtype=np.float32)

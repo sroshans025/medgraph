@@ -149,7 +149,29 @@ export async function detectMode(): Promise<Mode> {
   return mode;
 }
 
-const http = () => axios.create({ baseURL: getSettings().apiUrl, timeout: 120000 });
+/* ——— Auth plumbing (session is written by lib/auth.ts) ——— */
+function authToken(): string | undefined {
+  try { return (JSON.parse(localStorage.getItem('mg.session.v1') ?? 'null') as { token?: string } | null)?.token; } catch { return undefined; }
+}
+
+const http = () => {
+  const token = authToken();
+  const inst = axios.create({
+    baseURL: getSettings().apiUrl,
+    timeout: 120000,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  inst.interceptors.response.use(undefined, err => {
+    // Expired, revoked or missing token: end the session and return to sign-in.
+    if (err?.response?.status === 401 && !String(err.config?.url ?? '').includes('/auth/')) {
+      localStorage.removeItem('mg.session.v1');
+      const here = window.location.hash.replace(/^#/, '');
+      window.location.hash = `#/login?next=${encodeURIComponent(here)}`;
+    }
+    return Promise.reject(err);
+  });
+  return inst;
+};
 
 /* ——— Images ——— */
 export function scanImageUrl(c: DiagnosticResult): { src: string; burnedOverlay: boolean } {
@@ -157,7 +179,8 @@ export function scanImageUrl(c: DiagnosticResult): { src: string; burnedOverlay:
     const boxes = c.findings.filter(f => f.box).map(f => f.box as Box);
     return { src: scanDataUrl(c.modality, c.metadata.seed ?? 1, boxes), burnedOverlay: false };
   }
-  return { src: `${getSettings().apiUrl}/overlay/${c.case_id}`, burnedOverlay: true };
+  const token = authToken();
+  return { src: `${getSettings().apiUrl}/overlay/${c.case_id}${token ? `?token=${encodeURIComponent(token)}` : ''}`, burnedOverlay: true };
 }
 
 /* ——— Pipeline stages, shared by the upload UI ——— */

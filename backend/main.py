@@ -3,7 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config.config import settings
 from backend.api.routers.router import router as api_router
-from backend.services.models.storage.database.connection import engine, Base
+from backend.api.routers.auth import router as auth_router, ensure_demo_user
+from backend.services.models.storage.database.connection import engine, Base, async_session
 import backend.services.models.storage.database.models  # noqa: F401
 
 @asynccontextmanager
@@ -14,6 +15,8 @@ async def lifespan(app: FastAPI):
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    async with async_session() as session:
+        await ensure_demo_user(session)
     yield
 
 app = FastAPI(
@@ -36,6 +39,7 @@ app.add_middleware(
 
 # Register central routers
 app.include_router(api_router, prefix=settings.API_PREFIX)
+app.include_router(auth_router, prefix=settings.API_PREFIX)
 
 @app.get("/")
 async def root() -> dict:

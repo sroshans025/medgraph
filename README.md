@@ -32,10 +32,10 @@ The web app is split into a public landing page and a radiology **reading room**
 *   **Reasoning trace:** hover any graph node to light up its full lineage.
 
 **Sign in** (`#/login`)
-*   Split-screen sign-in with a rotating film panel, show/hide password, validation and a *Request access* mode that captures the reader's name and credentials.
+*   Split-screen sign-in with a rotating film panel, show/hide password, validation and a *Request access* mode for new readers.
 *   One-click demo account: `reader@medgraph.dev` / `radiology`.
-*   Every `#/app` route is guarded and redirects back to where you were after sign-in. The signed-in reader's name is stamped on report signatures and audit entries.
-*   The preview has no identity provider, so sessions are stored in the browser only. Swap `frontend/src/lib/auth.ts` for your IdP (OIDC/SAML) before any real deployment.
+*   Every `#/app` route is guarded and returns you to the page you asked for after sign-in. The reader's name is stamped on report signatures and audit entries.
+*   A badge shows whether you are on a **secure server** (real backend accounts) or in **demo mode** (browser-only profile, used when no API is reachable).
 
 **Reading room** (`#/app`)
 | View | What it does |
@@ -131,6 +131,37 @@ The React frontend will be running at **`http://localhost:5173`**. Sign in with 
 
 ---
 
+## 🔐 Authentication
+
+The backend ships with real reader accounts. There are no extra dependencies; everything is built on the Python standard library.
+
+| | |
+| :--- | :--- |
+| Passwords | Salted PBKDF2-HMAC-SHA256, 310,000 iterations, compared in constant time |
+| Sessions | Signed HS256 bearer tokens with expiry (`JWT_EXPIRE_MINUTES`, default 12 h) |
+| Protected | `POST /analyze`, `GET /case/{id}`, `GET /history`, `PATCH /report/{id}`, `GET /overlay/{id}` (also accepts `?token=` so `<img>` tags work) |
+| Public | `GET /health`, `GET /models`, `POST /auth/login`, `POST /auth/register` |
+| Audit | Report edits record the signed-in reader's email as `editor_id` |
+
+Endpoints: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/auth/me`. The first account registered on a fresh database becomes `admin`.
+
+Configure it with environment variables (copy `.env.example` to `.env`):
+
+*   `JWT_SECRET`: **set this in production**. Without it, a random key is generated at startup and tokens stop working after a restart. Docker Compose refuses to start until it is set.
+*   `AUTH_REQUIRED=false` turns protection off for local experiments.
+*   `ALLOW_REGISTRATION=false` closes self-sign-up.
+*   `SEED_DEMO_USER=false` removes the demo account. Do this for any deployment that holds real data.
+
+The frontend stores the token in `localStorage`, sends it as `Authorization: Bearer …`, and returns to the sign-in page on any `401`. For a hospital deployment, replace this with your identity provider (OIDC/SAML) and serve the API over HTTPS.
+
+---
+
+## 🌍 Making the hosted preview public
+
+Vercel protects deployments with **Vercel Authentication** by default, so only members of your Vercel team can open them. To share the link publicly: open the project in the Vercel dashboard → **Settings → Deployment Protection** → set **Vercel Authentication** to **Disabled** → **Save**. The next visit to the production URL loads without a Vercel login.
+
+---
+
 ## 🐳 Docker Deployment
 
 You can run the entire stack (FastAPI + React Vite + Database) using Docker Compose:
@@ -154,6 +185,11 @@ This mounts the backend container on port `8000` and the frontend container on p
 | `/api/v1/report/{case_id}` | `PATCH` | Edit/update report findings (saves to history) |
 | `/api/v1/models` | `GET` | List details and versions of registered models |
 | `/api/v1/health` | `GET` | Verify api readiness and pipeline health |
+| `/api/v1/auth/register` | `POST` | Create a reader account (JSON: `email`, `password`, `name`, `credentials`) |
+| `/api/v1/auth/login` | `POST` | Exchange email + password for a bearer token |
+| `/api/v1/auth/me` | `GET` | Current reader profile |
+
+Case, history, analyze, report and overlay endpoints require `Authorization: Bearer <token>`.
 
 ---
 

@@ -1,3 +1,4 @@
+import cv2
 import pytest
 import numpy as np
 import torch
@@ -103,7 +104,13 @@ def test_brain_unet_with_classifier() -> None:
     mock_logits_glioma[0, 0] = 10.0  # High logit for "glioma"
     model.classifier_model = MagicMock(return_value=mock_logits_glioma)
     
-    findings_glioma = model.predict(dummy_img, {})
+    # Classifier alone is not enough: without a segmented region there is
+    # nothing to localise, so no finding is reported.
+    assert model.predict(dummy_img, {}) == []
+
+    lesion_img = np.zeros((512, 512), dtype=np.float32)
+    cv2.circle(lesion_img, (300, 220), 22, 0.95, -1)
+    findings_glioma = model.predict(lesion_img, {})
     assert len(findings_glioma) == 1
     assert findings_glioma[0]["name"] == "Glioma Tumor"
     assert "Glioma" in findings_glioma[0]["evidence"]
