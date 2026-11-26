@@ -75,3 +75,12 @@ models_checkpoints/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Runtime output written by the backend (overlays, uploads, downloaded weights)
+storage/overlays/*
+storage/uploads/*
+storage/models/*
+!storage/**/.gitkeep
+
+# Local secrets
+.env
