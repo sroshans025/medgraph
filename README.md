@@ -223,30 +223,27 @@ Case, history, analyze, report and overlay endpoints require `Authorization: Bea
 
 ## 🌐 Production Deployment
 
-The frontend and backend deploy separately: the React app as static files on **Vercel**, and the FastAPI service as a Docker container on **Hugging Face Spaces** (free CPU tier with 16 GB RAM, enough for PyTorch, which Render's and Railway's free tiers are not).
+The frontend and backend deploy separately: the React app as static files on **Vercel**, and the FastAPI service as a Docker container on **Render** (free plan, no card required).
 
-### 1. Backend → Hugging Face Spaces
+### 1. Backend → Render
 
 One-time setup (about 5 minutes):
 
-1. Create an account at [huggingface.co](https://huggingface.co) → **New Space** → name it `medgraph-api`, SDK **Docker**, template **Blank**, hardware **CPU basic (free)**.
-2. In the Space → **Settings → Variables and secrets**, add a **secret** `JWT_SECRET` with a long random value:
-   `python -c "import secrets; print(secrets.token_urlsafe(48))"`
-3. On Hugging Face → **Settings → Access Tokens** → create a token with **Write** access.
-4. In this GitHub repo → **Settings → Secrets and variables → Actions**:
-   *   **Secrets** tab → `HF_TOKEN` = the token from step 3
-   *   **Variables** tab → `HF_SPACE` = `<your-hf-username>/medgraph-api`
-5. GitHub → **Actions → Deploy backend to Hugging Face → Run workflow**.
+1. Sign in at [render.com](https://render.com) with GitHub.
+2. **New → Blueprint** → select `sroshans025/medgraph`. Render reads `render.yaml`, which builds `backend/Dockerfile` on the free plan and generates a random `JWT_SECRET`.
+3. Click **Apply**. The first build takes about 10 minutes. The API is then live at
+   `https://medgraph-api.onrender.com/api/v1/health` (docs at `/docs`; Render may add a suffix to the name if it is taken).
 
-From then on, every push to `main` that touches `backend/`, `models/` or `requirements.txt` redeploys the Space automatically (`.github/workflows/deploy-backend.yml`). The first build takes about 10 minutes. The API is then live at
-`https://<your-hf-username>-medgraph-api.hf.space/api/v1/health` (docs at `/docs`).
+Every push to `main` redeploys automatically.
 
-> Free Spaces sleep after 48 h without traffic and wake on the next request (about 30–60 s). The SQLite database lives in the container, so cases and accounts reset when the Space restarts; the demo account is re-created automatically. Attach paid persistent storage or a managed database for anything long-lived.
+> Free Render services sleep after 15 minutes without traffic and take about a minute to wake; the frontend falls back to demo mode while the API is asleep. The free plan has 512 MB of RAM, which is tight for PyTorch: if the service restarts with "out of memory" during analysis, move it to the Starter plan. The SQLite database lives in the container, so cases and accounts reset on each deploy or restart; the demo account is re-created automatically.
+>
+> A Hugging Face Spaces workflow (`.github/workflows/deploy-backend.yml`) is also included for accounts with a PRO plan, which Docker Spaces now require. It runs only when the `HF_SPACE` repository variable is set.
 
 ### 2. Frontend → Vercel, connected to the API
 
 1. Vercel → **Add New → Project** → import `sroshans025/medgraph`. The root `vercel.json` already builds `frontend/`.
-2. **Settings → Environment Variables** → add `VITE_API_URL` = `https://<your-hf-username>-medgraph-api.hf.space/api/v1` (Production and Preview).
+2. **Settings → Environment Variables** → add `VITE_API_URL` = `https://medgraph-api.onrender.com/api/v1` (use your Render URL) (Production and Preview).
 3. **Deployments** → latest → **⋯ → Redeploy** (environment variables are baked in at build time).
 4. Open the site → **Sign in**: the badge should read **secure server**. If the API is asleep or unreachable, the app falls back to demo mode.
 

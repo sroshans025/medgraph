@@ -1,0 +1,20 @@
+# Render Blueprint: deploys the FastAPI backend from backend/Dockerfile on the free plan.
+# Render → New → Blueprint → pick this repo. JWT_SECRET is generated automatically.
+services:
+  - type: web
+    name: medgraph-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AUTH_REQUIRED
+        value: "true"
+      - key: SEED_DEMO_USER
+        value: "true"
+      - key: ALLOW_REGISTRATION
+        value: "true"
